@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 식물 주치의 - 핀셋 진단</title>
+  <style>
+    /* 전체 배경 및 폰트 세팅 */
+    body { 
+      background-color: #f4f6f8; 
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; 
+      display: flex; justify-content: center; align-items: center; 
+      height: 100vh; margin: 0; 
+    }
+    .app-container { 
+      width: 100%; max-width: 400px; height: 85vh; 
+      background: #ffffff; border-radius: 32px; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08); 
+      overflow: hidden; display: flex; flex-direction: column; 
+    }
+    
+    /* 상단 헤더 (깨끗한 여백) */
+    .header { 
+      padding: 24px 20px 16px; text-align: center; 
+      font-weight: 700; font-size: 17px; color: #111; 
+      border-bottom: 1px solid #f1f3f5; 
+    }
+    
+    /* 원스크롤 대화 영역 */
+    .chat-scroll { 
+      flex: 1; overflow-y: auto; padding: 24px 20px; 
+      background: #fafafa; display: flex; flex-direction: column; gap: 24px; 
+    }
+    
+    /* 비주얼 핀셋 사진 카드 */
+    .diagnosis-card { 
+      background: #fff; border-radius: 24px; padding: 12px; 
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04); 
+    }
+    .image-wrapper { 
+      position: relative; width: 100%; border-radius: 16px; overflow: hidden; 
+    }
+    .image-wrapper img { width: 100%; display: block; }
+    
+    /* 통통 튀는 핀 애니메이션 */
+    .pin { 
+      position: absolute; top: 40%; left: 55%; 
+      font-size: 32px; animation: bounce 1.2s infinite; 
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); 
+    }
+    @keyframes bounce { 
+      0%, 100% { transform: translateY(0); } 
+      50% { transform: translateY(-12px); } 
+    }
+    
+    /* AI 말풍선 및 국기 토글 */
+    .ai-bubble-container { 
+      display: flex; flex-direction: column; gap: 10px; align-items: flex-start; 
+    }
+    .ai-bubble { 
+      background: #fff; padding: 18px 20px; 
+      border-radius: 4px 24px 24px 24px; 
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04); 
+      font-size: 15px; line-height: 1.6; color: #343a40; 
+      border-left: 4px solid #2b8a3e; 
+    }
+    .translate-toggles { display: flex; gap: 8px; margin-left: 8px; }
+    .flag-btn { 
+      background: #fff; border: 1px solid #e9ecef; 
+      border-radius: 24px; padding: 6px 12px; font-size: 18px; 
+      cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
+      transition: all 0.2s ease; 
+    }
+    .flag-btn:hover { background: #f8f9fa; transform: translateY(-2px); }
+    .flag-btn.active { border-color: #2b8a3e; background: #ebfbee; }
+    
+    /* 하단 메시지 입력창 */
+    .input-area { 
+      padding: 16px 20px; background: #fff; 
+      border-top: 1px solid #f1f3f5; display: flex; align-items: center; gap: 12px; 
+    }
+    .camera-btn { 
+      background: #2b8a3e; color: white; border: none; 
+      border-radius: 50%; width: 48px; height: 48px; 
+      font-size: 20px; display: flex; justify-content: center; align-items: center; 
+      cursor: pointer; box-shadow: 0 4px 12px rgba(43, 138, 62, 0.3);
+    }
+    .text-input { 
+      flex: 1; background: #f1f3f5; border: none; 
+      padding: 14px 18px; border-radius: 24px; font-size: 15px; outline: none; 
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="header">🌿 다정한 식물 주치의</div>
+    
+    <div class="chat-scroll">
+      <!-- 1. 진단 사진과 핀(Pin) -->
+      <div class="diagnosis-card">
+        <div class="image-wrapper">
+          <img src="https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=500&auto=format&fit=crop&q=80" alt="식물 사진">
+          <div class="pin">📍</div>
+        </div>
+      </div>
+      
+      <!-- 2. AI 3줄 진단 & 국기 번역 버튼 -->
+      <div class="ai-bubble-container">
+        <div class="ai-bubble" id="ai-message">
+          <b>과습 주의! 🚨</b><br>
+          잎 끝이 노랗게 변하는 건 물이 너무 많아서 뿌리가 숨을 못 쉬고 있다는 뜻이야!<br>
+          당분간 물 주기를 멈추고 바람이 잘 통하는 곳으로 옮겨줘~ 🌷
+        </div>
+        <div class="translate-toggles">
+          <button class="flag-btn active">🇰🇷</button>
+          <button class="flag-btn">🇺🇸</button>
+          <button class="flag-btn">🇯🇵</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 3. 사진 업로드 및 질문 입력 바 -->
+    <div class="input-area">
+      <button class="camera-btn">📷</button>
+      <input type="text" class="text-input" placeholder="상태를 물어보세요...">
+    </div>
+  </div>
+</body>
+</html>
