@@ -2,6 +2,154 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI 식물 주치의 - 대시보드</title>
+  <style>
+    /* 전체 배경 및 폰트 세팅 */
+    body { 
+      background-color: #f4f6f8; 
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; 
+      display: flex; justify-content: center; align-items: center; 
+      margin: 0; height: 100dvh; overflow: hidden; 
+    }
+    .app-container { 
+      width: 100%; max-width: 480px; height: 100%; 
+      background: #ffffff; display: flex; flex-direction: column; 
+      position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); 
+    }
+    
+    /* 텍스트 반응형: 모바일에서 글자가 깨지지 않게 크기 조정 */
+    .header { padding: 32px 24px 16px; background: linear-gradient(180deg, #ffffff 0%, #fcfdfd 100%); z-index: 10; display: flex; align-items: center; gap: 8px; }
+    .header-text h1 { margin: 0; font-size: clamp(20px, 5vw, 24px); font-weight: 800; color: #111; word-break: keep-all; }
+    .header-text p { margin: 6px 0 0; font-size: 13px; color: #868e96; }
+    
+    /* 아이콘 고정: SVG가 무한정 커지는 것 방지 */
+    svg { flex-shrink: 0; max-width: 100%; }
+    .header-icon svg { width: 28px; height: 28px; color: #2b8a3e; }
+
+    .dashboard-scroll { flex: 1; overflow-y: auto; padding: 16px 24px 100px; background: #f8f9fa; display: flex; flex-direction: column; gap: 16px; scrollbar-width: none; }
+    
+    .card { background: #fff; border-radius: 24px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 12px; transition: transform 0.2s ease; cursor: pointer; }
+    .card-title { font-size: 17px; font-weight: 700; color: #343a40; display: flex; align-items: center; gap: 8px; }
+    .card-icon svg { width: 24px; height: 24px; color: currentColor; }
+    .card-desc { font-size: 13px; color: #868e96; line-height: 1.5; margin: 0; word-break: keep-all; }
+    
+    .tag-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tag { background: #f1f3f5; color: #495057; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 12px; display: flex; align-items: center; gap: 4px; }
+    .tag svg { width: 14px; height: 14px; }
+    
+    .action-btn { background: #ebfbee; color: #2b8a3e; border: none; padding: 14px; border-radius: 16px; font-weight: 700; font-size: 15px; margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 6px; cursor: pointer; }
+    .action-btn svg { width: 18px; height: 18px; }
+    
+    /* 하단 네비게이션 바 정렬 및 아이콘 크기 완벽 고정 */
+    .bottom-nav { 
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 75px; 
+      background: #fff; border-top: 1px solid #f1f3f5; display: flex; 
+      justify-content: space-around; align-items: center; 
+      padding-bottom: env(safe-area-inset-bottom); z-index: 100; 
+    }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #adb5bd; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; }
+    .nav-item svg { width: 24px; height: 24px; }
+    .nav-item.active { color: #2b8a3e; }
+    
+    .center-cam-wrapper { position: relative; top: -25px; flex: 1; display: flex; justify-content: center; }
+    .center-cam { background: #2b8a3e; width: 64px; height: 64px; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; box-shadow: 0 8px 24px rgba(43, 138, 62, 0.4); border: 4px solid #fff; cursor: pointer; }
+    .center-cam svg { width: 28px; height: 28px; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- 상단 헤더 -->
+    <div class="header">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c0-5 2-8 5-11 3-3 5-4 5-9 0 0-3 0-7 2-4 2-8 7-8 13z"/><path d="M5 22c0-3 1-5 3-8 2-3 3-4 3-7 0 0-2 0-5 1-3 1-6 5-6 10z"/></svg>
+      </div>
+      <div class="header-text">
+        <h1>안녕하세요, 식집사님!</h1>
+        <p>오늘도 초록초록한 하루 보내세요</p>
+      </div>
+    </div>
+    
+    <div class="dashboard-scroll">
+      <!-- 1. 빠른 식물 진단 카드 -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon" style="color: #2b8a3e;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          빠른 식물 진단
+        </div>
+        <p class="card-desc">사진을 찍고 몇 초 만에 AI의 정확한 처방전을 받아보세요.</p>
+        <div class="tag-group">
+          <span class="tag">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 즉시 결과
+          </span>
+          <span class="tag">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> AI 지원
+          </span>
+        </div>
+        <button class="action-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> 진단 시작하기 →
+        </button>
+      </div>
+
+      <!-- 2. 식물 매치 카드 -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon" style="color: #6741d9;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          </div>
+          공간 맞춤 식물 매치
+        </div>
+        <p class="card-desc">내 방 사진을 분석하여 가장 잘 어울리는 식물을 추천해 드려요.</p>
+        <button class="action-btn" style="background: #f3f0ff; color: #6741d9;">내 식물 찾아보기 →</button>
+      </div>
+
+      <!-- 3. 내 정원 카드 -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon" style="color: #495057;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          내 정원
+        </div>
+        <p class="card-desc">AI 진단과 관리 팁을 받으려면 첫 번째 반려 식물을 추가해 보세요.</p>
+        <button class="action-btn" style="background: #f8f9fa; color: #495057;">+ 첫 번째 식물 추가</button>
+      </div>
+    </div>
+    
+    <!-- 하단 네비게이션 바 -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>대시보드</span>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>내 식물</span>
+      </div>
+      <div class="center-cam-wrapper">
+        <div class="center-cam">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span>알림</span>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>설정</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 식물 주치의 - 대시보드</title>
   <style>
