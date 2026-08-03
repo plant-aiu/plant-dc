@@ -93,8 +93,8 @@
     .scan-laser { position: absolute; width: 100%; height: 3px; background: #40c057; box-shadow: 0 0 15px 5px rgba(64, 192, 87, 0.5); animation: scan 1.5s infinite ease-in-out alternate; }
     @keyframes scan { 0% { top: 10%; } 100% { top: 90%; } }
 
-    .card-result { background: #fff; border-radius: 24px; padding: 24px; margin: -20px 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.04); display: none; flex-direction: column; gap: 16px; z-index: 2; position: relative; }
-    .card-normal { margin: 0 20px 16px; z-index: 1; }
+    .card-result { background: #fff; border-radius: 24px; padding: 24px; margin: 16px 20px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.04); display: none; flex-direction: column; gap: 16px; z-index: 2; position: relative; }
+    .card-normal { margin: 16px 20px 0; z-index: 1; }
     .card-header-res { display: flex; justify-content: space-between; align-items: center; }
     .status-badge { background: #fff5f5; color: #f03e3e; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 12px; }
 
@@ -120,7 +120,6 @@
 
     .bottom-action { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #ffffff 20%); padding: 30px 20px 20px; display: none; flex-direction: column; gap: 10px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
     .btn-primary { background: #2b8a3e; color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 16px; width: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
-    .btn-secondary { background: #f1f3f5; color: #495057; border: none; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 16px; width: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
 
     /* 상세 다마고치 뷰 엘리먼트 */
     .detail-thumb { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 4px solid #2b8a3e; box-shadow: 0 8px 24px rgba(43,138,62,0.15); }
@@ -235,7 +234,7 @@
     <input type="file" id="real-camera-input" accept="image/*" capture="environment" style="display: none;">
 
     <!-- =========================================
-         [팝업 1] AI 진단 결과 모달
+         [팝업 1] AI 진단 결과 모달 (스캐닝 + 치료 플랜 포함)
          ========================================= -->
     <div class="result-modal" id="resultModal">
       <div class="header-result">
@@ -390,7 +389,7 @@
       item.classList.toggle('checked');
     }
 
-    // 다마고치 퀘스트 완료 (수채화 하트 파스칼 효과)
+    // 다마고치 퀘스트 완료 (수채화 하트 효과)
     function completeQuest(checkbox) {
       if (checkbox.checked) {
         const heart = document.getElementById('heartPopup');
