@@ -1,1 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI 식물 주치의 - 통합 앱</title>
+  <style>
+    /* =========================================
+       1. 공통 뼈대 스타일
+       ========================================= */
+    body { background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; display: flex; justify-content: center; align-items: center; margin: 0; height: 100dvh; overflow: hidden; }
+    .app-container { width: 100%; max-width: 480px; height: 100%; background: #ffffff; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); overflow: hidden; }
+    svg { flex-shrink: 0; display: block; }
 
+    /* 화면 전환을 위한 공통 뷰 박스 */
+    .view-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; display: flex; flex-direction: column; transition: transform 0.3s ease; z-index: 5; }
+    .view-screen.hidden { transform: translateX(100%); pointer-events: none; }
+
+    /* =========================================
+       2. [화면 A] 대시보드 스타일
+       ========================================= */
+    .header-dash { padding: 32px 24px 16px; background: linear-gradient(180deg, #ffffff 0%, #fcfdfd 100%); display: flex; align-items: center; gap: 10px; }
+    .header-dash h1 { margin: 0; font-size: clamp(20px, 5vw, 24px); font-weight: 800; color: #111; word-break: keep-all; }
+    .header-dash p { margin: 6px 0 0; font-size: 13px; color: #868e96; }
+    .dash-icon { width: 32px; height: 32px; color: #2b8a3e; display: flex; align-items: center; justify-content: center; }
+    .dash-icon svg { width: 100%; height: 100%; }
+
+    .dashboard-scroll { flex: 1; overflow-y: auto; padding: 16px 24px 100px; background: #f8f9fa; display: flex; flex-direction: column; gap: 16px; scrollbar-width: none; }
+    .card-dash { background: #fff; border-radius: 24px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 12px; }
+    .card-title-dash { font-size: 17px; font-weight: 700; color: #343a40; display: flex; align-items: center; gap: 8px; }
+    .icon-box { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+    .icon-box svg { width: 100%; height: 100%; color: currentColor; }
+    .card-desc-dash { font-size: 13px; color: #868e96; line-height: 1.5; margin: 0; word-break: keep-all; }
+    .tag-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tag { background: #f1f3f5; color: #495057; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 12px; display: flex; align-items: center; gap: 6px; }
+    .tag svg { width: 14px; height: 14px; }
+    .action-btn-dash { background: #ebfbee; color: #2b8a3e; border: none; padding: 14px; border-radius: 16px; font-weight: 700; font-size: 15px; margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 8px; cursor: pointer; }
+    .action-btn-dash svg { width: 18px; height: 18px; }
+
+    /* =========================================
+       3. [화면 B] 내 정원 (바둑판 갤러리) 스타일
+       ========================================= */
+    #gardenView { z-index: 4; }
+    .header-garden { padding: 32px 24px 16px; background: #fff; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f3f5; }
+    .header-garden h1 { margin: 0; font-size: 20px; font-weight: 800; color: #111; }
+    .sound-toggle-btn { background: #f1f3f5; border: none; padding: 8px 12px; border-radius: 12px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+    .garden-scroll { flex: 1; overflow-y: auto; padding: 20px 20px 100px; background: #f8f9fa; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; align-content: start; scrollbar-width: none; }
+    .plant-card { background: #fff; border-radius: 24px; padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: transform 0.2s ease; position: relative; }
+    .plant-card:active { transform: scale(0.96); }
+    .plant-thumb { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ebfbee; }
+    .plant-name { font-size: 15px; font-weight: 700; color: #343a40; margin: 0; }
+    .plant-mood { font-size: 12px; color: #2b8a3e; background: #ebfbee; padding: 4px 10px; border-radius: 10px; font-weight: 600; }
+    
+    .add-card { border: 2px dashed #dee2e6; background: #f8f9fa; justify-content: center; }
+    .add-icon-circle { width: 50px; height: 50px; border-radius: 50%; background: #fff; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #2b8a3e; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .add-text { font-size: 13px; font-weight: 600; color: #868e96; margin: 0; }
+
+    /* =========================================
+       4. 하단 네비게이션 바 (공통)
+       ========================================= */
+    .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; height: 75px; background: #fff; border-top: 1px solid #f1f3f5; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #adb5bd; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; }
+    .nav-item svg { width: 24px; height: 24px; margin-bottom: 2px; }
+    .nav-item.active { color: #2b8a3e; }
+    
+    .center-cam-wrapper { position: relative; top: -25px; flex: 1; display: flex; justify-content: center; }
+    .center-cam { background: #2b8a3e; width: 64px; height: 64px; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; box-shadow: 0 8px 24px rgba(43, 138, 62, 0.4); border: 4px solid #fff; cursor: pointer; transition: transform 0.2s; }
+    .center-cam:active { transform: scale(0.95); }
+    .center-cam svg { width: 28px; height: 28px; }
+
+    /* =========================================
+       5. 팝업 모달들 (진단 결과 & 상세 다마고치)
+       ========================================= */
+    .result-modal, .detail-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #f4f6f8; z-index: 200; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .result-modal.show, .detail-modal.show { transform: translateY(0); }
+
+    .header-result, .detail-header { padding: 20px 24px; background: #ffffff; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f3f5; }
+    .back-btn, .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #111; padding: 4px; }
+    .header-title { font-size: 16px; font-weight: 700; color: #111; }
+    .share-btn { color: #2b8a3e; cursor: pointer; }
+
+    .result-scroll, .detail-body { flex: 1; overflow-y: auto; padding: 0 0 120px; background: #f8f9fa; display: flex; flex-direction: column; scrollbar-width: none; }
+    .detail-body { padding: 24px; align-items: center; gap: 20px; }
+
+    /* 진단 결과 내부 엘리먼트 */
+    .hero-image { width: 100%; height: 220px; background: #e9ecef; position: relative; overflow: hidden; }
+    .hero-image img { width: 100%; height: 100%; object-fit: cover; }
+    .plant-tag { position: absolute; bottom: 16px; left: 24px; background: rgba(255, 255, 255, 0.9); padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 14px; color: #111; box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px); }
+    
+    .scan-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 50; }
+    .scan-text { color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 1px; }
+    .scan-laser { position: absolute; width: 100%; height: 3px; background: #40c057; box-shadow: 0 0 15px 5px rgba(64, 192, 87, 0.5); animation: scan 1.5s infinite ease-in-out alternate; }
+    @keyframes scan { 0% { top: 10%; } 100% { top: 90%; } }
+
+    .card-result { background: #fff; border-radius: 24px; padding: 24px; margin: -20px 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.04); display: none; flex-direction: column; gap: 16px; z-index: 2; position: relative; }
+    .card-normal { margin: 0 20px 16px; z-index: 1; }
+    .card-header-res { display: flex; justify-content: space-between; align-items: center; }
+    .status-badge { background: #fff5f5; color: #f03e3e; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 12px; }
+
+    .score-container { display: flex; align-items: center; gap: 20px; }
+    .score-ring { width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(#f03e3e 70%, #f1f3f5 0); display: flex; justify-content: center; align-items: center; }
+    .score-inner { width: 64px; height: 64px; background: #fff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .score-value { font-size: 24px; font-weight: 800; color: #111; line-height: 1; }
+    .score-desc { font-size: 10px; color: #868e96; margin-top: 2px; }
+    .score-text { flex: 1; font-size: 14px; color: #495057; line-height: 1.5; }
+
+    .ai-summary { background: #f8f9fa; padding: 16px; border-radius: 16px; font-size: 14px; color: #343a40; line-height: 1.6; border-left: 4px solid #2b8a3e; }
+
+    .task-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #f1f3f5; cursor: pointer; transition: all 0.2s ease; }
+    .task-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .task-checkbox { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #dee2e6; flex-shrink: 0; display: flex; justify-content: center; align-items: center; }
+    .task-content { flex: 1; }
+    .task-title { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .task-time { font-size: 11px; color: #2b8a3e; background: #ebfbee; padding: 2px 8px; border-radius: 8px; font-weight: 700; }
+    .task-desc { font-size: 13px; color: #868e96; line-height: 1.4; }
+    .task-item.checked .task-checkbox { background-color: #2b8a3e; border-color: #2b8a3e; }
+    .task-item.checked .task-checkbox::after { content: '✔'; color: white; font-size: 14px; font-weight: 900; }
+    .task-item.checked .task-title { text-decoration: line-through; color: #adb5bd; }
+
+    .bottom-action { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #ffffff 20%); padding: 30px 20px 20px; display: none; flex-direction: column; gap: 10px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+    .btn-primary { background: #2b8a3e; color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 16px; width: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-secondary { background: #f1f3f5; color: #495057; border: none; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 16px; width: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+
+    /* 상세 다마고치 뷰 엘리먼트 */
+    .detail-thumb { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 4px solid #2b8a3e; box-shadow: 0 8px 24px rgba(43,138,62,0.15); }
+    .quest-box { width: 100%; background: #f8f9fa; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
+    .quest-title { font-size: 15px; font-weight: 700; color: #111; display: flex; justify-content: space-between; align-items: center; }
+
+    /* ✨ 수채화 파스텔 하트 애니메이션 */
+    .water-effect { position: relative; }
+    @keyframes watercolorPulse {
+      0% { transform: scale(0.8); opacity: 0; filter: blur(4px); }
+      50% { opacity: 0.8; filter: blur(0px); }
+      100% { transform: scale(1.2); opacity: 0; filter: blur(8px); }
+    }
+    .heart-popup { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); font-size: 36px; pointer-events: none; display: none; animation: watercolorPulse 1.2s ease-out forwards; z-index: 10; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- =========================================
+         [화면 A] 대시보드 뷰
+         ========================================= -->
+    <div class="view-screen" id="dashView">
+      <div class="header-dash">
+        <div class="dash-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c0-5 2-8 5-11 3-3 5-4 5-9 0 0-3 0-7 2-4 2-8 7-8 13z"/><path d="M5 22c0-3 1-5 3-8 2-3 3-4 3-7 0 0-2 0-5 1-3 1-6 5-6 10z"/></svg>
+        </div>
+        <div>
+          <h1>안녕하세요, 식집사님!</h1>
+          <p>오늘도 초록초록한 하루 보내세요</p>
+        </div>
+      </div>
+      
+      <div class="dashboard-scroll">
+        <div class="card-dash">
+          <div class="card-title-dash">
+            <div class="icon-box" style="color: #f03e3e;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+            "살려주세요!" AI 식물 주치의
+          </div>
+          <p class="card-desc-dash">사진 한 장으로 시든 원인을 파악하고, 내 식물에 딱 맞는 맞춤 처방전을 즉시 발급해 드려요.</p>
+          <div class="tag-group">
+            <span class="tag">병충해 진단</span>
+            <span class="tag">맞춤 처방</span>
+          </div>
+          <button class="action-btn-dash" style="background: #ffe3e3; color: #f03e3e;" onclick="openCamera()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> 긴급 진단 시작하기 →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         [화면 B] 내 정원 (바둑판 갤러리) 뷰
+         ========================================= -->
+    <div class="view-screen hidden" id="gardenView">
+      <div class="header-garden">
+        <h1>🌿 나의 반려 정원</h1>
+        <button class="sound-toggle-btn" id="soundBtn" onclick="toggleSound()">🔊 사운드 ON</button>
+      </div>
+
+      <div class="garden-scroll">
+        <!-- 새 식물 등록 카드 -->
+        <div class="plant-card add-card" onclick="openCamera()">
+          <div class="add-icon-circle">+</div>
+          <p class="add-text">새 식물 등록</p>
+        </div>
+
+        <!-- 식물 카드 1 -->
+        <div class="plant-card" onclick="openDetail('몬모니 (몬스테라)', 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=800&auto=format&fit=crop&q=80', '😊 기분 최고!')">
+          <img src="https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=800&auto=format&fit=crop&q=80" class="plant-thumb" alt="식물">
+          <p class="plant-name">몬모니</p>
+          <span class="plant-mood">😊 기분 최고!</span>
+        </div>
+
+        <!-- 식물 카드 2 -->
+        <div class="plant-card" onclick="openDetail('야자이 (아레카야자)', 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=800&auto=format&fit=crop&q=80', '💧 목이 말라요')">
+          <img src="https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=800&auto=format&fit=crop&q=80" class="plant-thumb" alt="식물">
+          <p class="plant-name">야자이</p>
+          <span class="plant-mood" style="color: #f03e3e; background: #fff5f5;">💧 목이 말라요</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         공통 하단 네비게이션 바
+         ========================================= -->
+    <div class="bottom-nav">
+      <div class="nav-item active" id="navDash" onclick="switchTab('dash')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>대시보드</span>
+      </div>
+      <div class="nav-item" id="navGarden" onclick="switchTab('garden')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>내 정원</span>
+      </div>
+      <div class="center-cam-wrapper">
+        <div class="center-cam" onclick="openCamera()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+      </div>
+      <div class="nav-item" onclick="alert('준비 중인 기능입니다!')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+        <span>알림</span>
+      </div>
+      <div class="nav-item" onclick="alert('준비 중인 기능입니다!')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>설정</span>
+      </div>
+    </div>
+
+    <!-- 숨겨진 카메라 파일 입력창 -->
+    <input type="file" id="real-camera-input" accept="image/*" capture="environment" style="display: none;">
+
+    <!-- =========================================
+         [팝업 1] AI 진단 결과 모달
+         ========================================= -->
+    <div class="result-modal" id="resultModal">
+      <div class="header-result">
+        <div class="back-btn" onclick="closeModal('resultModal')">←</div>
+        <div class="header-title">진단 결과</div>
+        <div class="share-btn">🔗</div>
+      </div>
+      <div class="result-scroll">
+        <div class="hero-image">
+          <img src="https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=800&auto=format&fit=crop&q=80" alt="진단 식물">
+          <div class="scan-overlay" id="scanOverlay">
+            <div class="scan-text">식물 상태를 분석 중입니다...</div>
+            <div class="scan-laser"></div>
+          </div>
+          <div class="plant-tag" id="plantTag" style="display: none;">🌿 몬스테라 델리시오사</div>
+        </div>
+
+        <div class="card-result">
+          <div class="card-header-res">
+            <div class="card-title-dash">식물 건강 평가</div>
+            <div class="status-badge">주의 필요</div>
+          </div>
+          <div class="score-container">
+            <div class="score-ring"><div class="score-inner"><span class="score-value">70</span><span class="score-desc">/ 100</span></div></div>
+            <div class="score-text">잎 끝이 노랗게 변하고 있어요. <b>과습</b>의 초기 증상이 의심됩니다.</div>
+          </div>
+        </div>
+
+        <div class="card-result card-normal">
+          <div class="card-title-dash">분석 요약</div>
+          <div class="ai-summary"><b>AI 진단:</b> 흙이 오랫동안 축축하게 유지되어 잎 끝으로 수분이 몰려 갈변하는 현상이 나타나고 있습니다.</div>
+        </div>
+
+        <div class="card-result card-normal" style="margin-bottom: 40px;">
+          <div class="card-title-dash">치료 플랜</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-checkbox"></div>
+            <div class="task-content">
+              <div class="task-title">물 주기 즉시 중단 <span class="task-time">지금 당장</span></div>
+              <div class="task-desc">화분의 흙이 완전히 마를 때까지 최소 1주일간 멈춰주세요.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bottom-action" id="bottomAction">
+        <button class="btn-primary" onclick="window.open('http://18005900.co.kr', '_blank')">식집사 추천 식물 보러가기</button>
+      </div>
+    </div>
+
+    <!-- =========================================
+         [팝업 2] 내 정원 상세 다마고치 뷰 모달
+         ========================================= -->
+    <div class="detail-modal" id="detailModal">
+      <div class="detail-header">
+        <h2 id="detailTitle" style="margin:0; font-size:17px;">식물 상세 정보</h2>
+        <button class="close-btn" onclick="closeModal('detailModal')">✕</button>
+      </div>
+      
+      <div class="detail-body water-effect">
+        <div class="heart-popup" id="heartPopup">💚 🌿 ✨</div>
+        <img id="detailThumb" src="" class="detail-thumb" alt="상세 식물">
+        <div id="detailMood" class="plant-mood" style="font-size: 14px; padding: 6px 14px;"></div>
+
+        <div class="quest-box">
+          <div class="quest-title">
+            <span>💌 오늘의 다정한 퀘스트</span>
+            <span style="font-size:12px; color:#2b8a3e; font-weight:600;">EXP +20</span>
+          </div>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" onchange="completeQuest(this)" style="width: 20px; height: 20px; accent-color: #2b8a3e;">
+            겉흙이 포슬포슬 말랐는지 손가락으로 콕 찔러보기!
+          </label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let isSoundOn = true;
+
+    // 탭 전환 마법 (대시보드 ↔ 내 정원)
+    function switchTab(tab) {
+      const dashView = document.getElementById('dashView');
+      const gardenView = document.getElementById('gardenView');
+      const navDash = document.getElementById('navDash');
+      const navGarden = document.getElementById('navGarden');
+
+      if (tab === 'dash') {
+        dashView.classList.remove('hidden');
+        gardenView.classList.add('hidden');
+        navDash.classList.add('active');
+        navGarden.classList.remove('active');
+      } else {
+        dashView.classList.add('hidden');
+        gardenView.classList.remove('hidden');
+        navDash.classList.remove('active');
+        navGarden.classList.add('active');
+      }
+    }
+
+    // 사운드 토글
+    function toggleSound() {
+      isSoundOn = !isSoundOn;
+      document.getElementById('soundBtn').innerText = isSoundOn ? "🔊 사운드 ON" : "🔇 사운드 OFF";
+    }
+
+    // 카메라 열기
+    function openCamera() {
+      document.getElementById('real-camera-input').click();
+    }
+
+    // 사진 선택 시 진단 모달 + 스캐닝 애니메이션 실행
+    document.getElementById('real-camera-input').addEventListener('change', function(event) {
+      if (event.target.files.length > 0) {
+        document.getElementById('resultModal').classList.add('show');
+        
+        document.getElementById('scanOverlay').style.display = 'flex';
+        document.getElementById('plantTag').style.display = 'none';
+        document.getElementById('bottomAction').style.display = 'none';
+        
+        const resultCards = document.querySelectorAll('.card-result');
+        resultCards.forEach(card => card.style.display = 'none');
+
+        setTimeout(() => {
+          document.getElementById('scanOverlay').style.display = 'none';
+          document.getElementById('plantTag').style.display = 'block';
+          document.getElementById('bottomAction').style.display = 'flex';
+          resultCards.forEach(card => card.style.display = 'flex');
+        }, 2500);
+
+        event.target.value = ''; 
+      }
+    });
+
+    // 상세 다마고치 모달 열기
+    function openDetail(name, thumb, mood) {
+      document.getElementById('detailTitle').innerText = name;
+      document.getElementById('detailThumb').src = thumb;
+      document.getElementById('detailMood').innerText = mood;
+      document.getElementById('detailModal').classList.add('show');
+    }
+
+    // 모달 닫기 공통
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('show');
+    }
+
+    // 치료 플랜 체크
+    function toggleTask(item) {
+      item.classList.toggle('checked');
+    }
+
+    // 다마고치 퀘스트 완료 (수채화 하트 파스칼 효과)
+    function completeQuest(checkbox) {
+      if (checkbox.checked) {
+        const heart = document.getElementById('heartPopup');
+        heart.style.display = 'block';
+        setTimeout(() => { heart.style.display = 'none'; }, 1200);
+
+        if (isSoundOn) {
+          console.log("🎵 맑고 투명한 ASMR 물방울 소리 재생!");
+        }
+      }
+    }
+  </script>
+</body>
+</html>
