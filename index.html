@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI 식물 주치의 - 대시보드</title>
+  <title>AI 식물 주치의 - 진단 결과</title>
   <style>
     /* 전체 배경 및 폰트 세팅 */
     body { 
@@ -18,74 +18,93 @@
       position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); 
     }
     
-    /* 텍스트 반응형 세팅 */
-    .header { padding: 32px 24px 16px; background: linear-gradient(180deg, #ffffff 0%, #fcfdfd 100%); z-index: 10; display: flex; align-items: center; gap: 10px; }
-    .header-text h1 { margin: 0; font-size: clamp(20px, 5vw, 24px); font-weight: 800; color: #111; word-break: keep-all; }
-    .header-text p { margin: 6px 0 0; font-size: 13px; color: #868e96; }
-    
-    /* 🔥 SVG 아이콘 사이즈 무한 팽창 방지 (핵심 코드) */
-    svg { flex-shrink: 0; display: block; }
-    .header-icon { width: 32px; height: 32px; flex-shrink: 0; color: #2b8a3e; display: flex; align-items: center; justify-content: center; }
-    .header-icon svg { width: 100%; height: 100%; }
-
-    .dashboard-scroll { flex: 1; overflow-y: auto; padding: 16px 24px 100px; background: #f8f9fa; display: flex; flex-direction: column; gap: 16px; scrollbar-width: none; }
-    
-    .card { background: #fff; border-radius: 24px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 12px; transition: transform 0.2s ease; cursor: pointer; }
-    .card-title { font-size: 17px; font-weight: 700; color: #343a40; display: flex; align-items: center; gap: 8px; }
-    
-    /* 카드 내 아이콘 사이즈 고정 */
-    .card-icon { width: 24px; height: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    .card-icon svg { width: 100%; height: 100%; color: currentColor; }
-    .card-desc { font-size: 13px; color: #868e96; line-height: 1.5; margin: 0; word-break: keep-all; }
-    
-    .tag-group { display: flex; gap: 8px; flex-wrap: wrap; }
-    .tag { background: #f1f3f5; color: #495057; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 12px; display: flex; align-items: center; gap: 6px; }
-    .tag svg { width: 14px; height: 14px; flex-shrink: 0; }
-    
-    .action-btn { background: #ebfbee; color: #2b8a3e; border: none; padding: 14px; border-radius: 16px; font-weight: 700; font-size: 15px; margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 8px; cursor: pointer; }
-    .action-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-    
-    /* 하단 네비게이션 바 정렬 및 아이콘 크기 완벽 고정 */
-    .bottom-nav { 
-      position: absolute; bottom: 0; left: 0; width: 100%; height: 75px; 
-      background: #fff; border-top: 1px solid #f1f3f5; display: flex; 
-      justify-content: space-around; align-items: center; 
-      padding-bottom: env(safe-area-inset-bottom); z-index: 100; 
+    /* 상단 뒤로가기 헤더 */
+    .header { 
+      padding: 20px 24px; background: #ffffff; z-index: 10; 
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #f1f3f5;
     }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #adb5bd; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; }
-    .nav-item svg { width: 24px; height: 24px; flex-shrink: 0; margin-bottom: 2px; }
-    .nav-item.active { color: #2b8a3e; }
+    .back-btn { display: flex; align-items: center; cursor: pointer; color: #111; }
+    .header-title { font-size: 16px; font-weight: 700; color: #111; }
+    .share-btn { color: #2b8a3e; cursor: pointer; }
+    svg { flex-shrink: 0; display: block; }
+
+    /* 진단 결과 스크롤 영역 */
+    .result-scroll { 
+      flex: 1; overflow-y: auto; padding: 0 0 100px; 
+      background: #f8f9fa; display: flex; flex-direction: column; 
+      scrollbar-width: none; 
+    }
+
+    /* 진단된 식물 이미지 배너 */
+    .hero-image { 
+      width: 100%; height: 220px; background: #e9ecef; 
+      position: relative; overflow: hidden;
+    }
+    .hero-image img { width: 100%; height: 100%; object-fit: cover; }
+    .plant-tag {
+      position: absolute; bottom: 16px; left: 24px;
+      background: rgba(255, 255, 255, 0.9); padding: 8px 16px;
+      border-radius: 20px; font-weight: 700; font-size: 14px; color: #111;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px);
+    }
+
+    /* 공통 카드 스타일 */
+    .card { 
+      background: #fff; border-radius: 24px; padding: 24px; 
+      margin: -20px 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.04); 
+      display: flex; flex-direction: column; gap: 16px; z-index: 2; position: relative;
+    }
+    .card-normal { margin: 0 20px 16px; z-index: 1; }
     
-    .center-cam-wrapper { position: relative; top: -25px; flex: 1; display: flex; justify-content: center; }
-    .center-cam { background: #2b8a3e; width: 64px; height: 64px; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; box-shadow: 0 8px 24px rgba(43, 138, 62, 0.4); border: 4px solid #fff; cursor: pointer; }
-    .center-cam svg { width: 28px; height: 28px; flex-shrink: 0; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; }
+    .card-title { font-size: 16px; font-weight: 700; color: #111; display: flex; align-items: center; gap: 8px; }
+    .status-badge { background: #fff5f5; color: #f03e3e; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 12px; }
+
+    /* 건강 점수 링 UI */
+    .score-container { display: flex; align-items: center; gap: 20px; }
+    .score-ring {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: conic-gradient(#f03e3e 70%, #f1f3f5 0);
+      display: flex; justify-content: center; align-items: center;
+    }
+    .score-inner { 
+      width: 64px; height: 64px; background: #fff; border-radius: 50%; 
+      display: flex; flex-direction: column; justify-content: center; align-items: center; 
+    }
+    .score-value { font-size: 24px; font-weight: 800; color: #111; line-height: 1; }
+    .score-desc { font-size: 10px; color: #868e96; margin-top: 2px; }
+    .score-text { flex: 1; font-size: 14px; color: #495057; line-height: 1.5; }
+
+    /* AI 분석 요약 */
+    .ai-summary { background: #f8f9fa; padding: 16px; border-radius: 16px; font-size: 14px; color: #343a40; line-height: 1.6; border-left: 4px solid #2b8a3e; }
+
+    /* 치료 플랜 체크리스트 */
+    .task-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #f1f3f5; }
+    .task-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .task-checkbox { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #dee2e6; flex-shrink: 0; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+    .task-content { flex: 1; }
+    .task-title { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .task-time { font-size: 11px; color: #2b8a3e; background: #ebfbee; padding: 2px 8px; border-radius: 8px; font-weight: 700; }
+    .task-desc { font-size: 13px; color: #868e96; line-height: 1.4; }
+
+    /* 하단 고정 액션 버튼 구역 */
+    .bottom-action {
+      position: absolute; bottom: 0; left: 0; width: 100%; 
+      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #ffffff 20%);
+      padding: 30px 20px 20px; display: flex; flex-direction: column; gap: 10px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+    .btn-primary { background: #2b8a3e; color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 16px; width: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-secondary { background: #f1f3f5; color: #495057; border: none; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 16px; width: 100%; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
 
     /* 🔥 치료 플랜 체크박스 클릭 애니메이션 효과 */
-.task-item { 
-  cursor: pointer; /* 마우스를 올리면 손가락 모양으로 변경 */
-  transition: all 0.2s ease; 
-}
-.task-item.checked .task-checkbox {
-  background-color: #2b8a3e; /* 초록색 배경으로 변경 */
-  border-color: #2b8a3e;
-}
-.task-item.checked .task-checkbox::after {
-  content: '✔'; /* 체크 모양 등장 */
-  color: white;
-  font-size: 14px;
-  font-weight: 900;
-}
-.task-item.checked .task-title {
-  text-decoration: line-through; /* 제목에 취소선 긋기 */
-  color: #adb5bd; /* 글자색을 옅은 회색으로 변경 */
-}
-.task-item.checked .task-time {
-  background: #f1f3f5;
-  color: #adb5bd;
-}
-.task-item.checked .task-desc {
-  color: #dee2e6; /* 설명글도 옅게 변경 */
-}
+    .task-item { cursor: pointer; transition: all 0.2s ease; }
+    .task-item.checked .task-checkbox { background-color: #2b8a3e; border-color: #2b8a3e; }
+    .task-item.checked .task-checkbox::after { content: '✔'; color: white; font-size: 14px; font-weight: 900; }
+    .task-item.checked .task-title { text-decoration: line-through; color: #adb5bd; }
+    .task-item.checked .task-time { background: #f1f3f5; color: #adb5bd; }
+    .task-item.checked .task-desc { color: #dee2e6; }
   </style>
 </head>
 <body>
@@ -93,101 +112,115 @@
     
     <!-- 상단 헤더 -->
     <div class="header">
-      <div class="header-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c0-5 2-8 5-11 3-3 5-4 5-9 0 0-3 0-7 2-4 2-8 7-8 13z"/><path d="M5 22c0-3 1-5 3-8 2-3 3-4 3-7 0 0-2 0-5 1-3 1-6 5-6 10z"/></svg>
+      <div class="back-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </div>
-      <div class="header-text">
-        <h1>안녕하세요, 식집사님!</h1>
-        <p>오늘도 초록초록한 하루 보내세요</p>
-      </div>
-    </div>
-    
-    <!-- 대시보드 스크롤 영역 -->
-    <div class="dashboard-scroll">
-      <!-- 1. 빠른 식물 진단 카드 -->
-      <div class="card">
-        <div class="card-title">
-          <div class="card-icon" style="color: #2b8a3e;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </div>
-          빠른 식물 진단
-        </div>
-        <p class="card-desc">사진을 찍고 몇 초 만에 AI의 정확한 처방전을 받아보세요.</p>
-        <div class="tag-group">
-          <span class="tag">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 즉시 결과
-          </span>
-          <span class="tag">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> AI 지원
-          </span>
-        </div>
-        <button class="action-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> 진단 시작하기 →
-        </button>
-      </div>
-
-      <!-- 2. 식물 매치 카드 -->
-      <div class="card">
-        <div class="card-title">
-          <div class="card-icon" style="color: #6741d9;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-          </div>
-          공간 맞춤 식물 매치
-        </div>
-        <p class="card-desc">내 방 사진을 분석하여 가장 잘 어울리는 식물을 추천해 드려요.</p>
-        <button class="action-btn" style="background: #f3f0ff; color: #6741d9;">내 식물 찾아보기 →</button>
-      </div>
-
-      <!-- 3. 내 정원 카드 -->
-      <div class="card">
-        <div class="card-title">
-          <div class="card-icon" style="color: #495057;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          </div>
-          내 정원
-        </div>
-        <p class="card-desc">AI 진단과 관리 팁을 받으려면 첫 번째 반려 식물을 추가해 보세요.</p>
-        <button class="action-btn" style="background: #f8f9fa; color: #495057;">+ 첫 번째 식물 추가</button>
+      <div class="header-title">진단 결과</div>
+      <div class="share-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
       </div>
     </div>
     
-    <!-- 하단 네비게이션 바 -->
-    <div class="bottom-nav">
-      <div class="nav-item active">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        <span>대시보드</span>
+    <div class="result-scroll">
+      <!-- 히어로 이미지 -->
+      <div class="hero-image">
+        <img src="https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=800&auto=format&fit=crop&q=80" alt="진단 식물">
+        <div class="plant-tag">🌿 몬스테라 델리시오사</div>
       </div>
-      <div class="nav-item">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span>내 식물</span>
-      </div>
-      <div class="center-cam-wrapper">
-        <div class="center-cam">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+
+      <!-- 1. 건강 평가 카드 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2b8a3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+            식물 건강 평가
+          </div>
+          <div class="status-badge">주의 필요</div>
+        </div>
+        <div class="score-container">
+          <div class="score-ring">
+            <div class="score-inner">
+              <span class="score-value">70</span>
+              <span class="score-desc">/ 100</span>
+            </div>
+          </div>
+          <div class="score-text">
+            잎 끝이 노랗게 변하고 있어요. 전반적인 생기는 유지하고 있지만, <b>과습</b>의 초기 증상이 의심됩니다.
+          </div>
         </div>
       </div>
-      <div class="nav-item">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span>알림</span>
+
+      <!-- 2. AI 분석 요약 카드 -->
+      <div class="card card-normal">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6741d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+            분석 요약
+          </div>
+        </div>
+        <div class="ai-summary">
+          <b>AI 진단:</b> 뿌리가 숨을 쉬기 힘들어하고 있어요! 몬스테라는 건조에는 강하지만 과습에는 취약합니다. 흙이 오랫동안 축축하게 유지되어 잎 끝으로 수분이 몰려 갈변하는 현상이 나타나고 있습니다.
+        </div>
       </div>
-      <div class="nav-item">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span>설정</span>
+
+      <!-- 3. 치료 플랜 체크리스트 카드 -->
+      <div class="card card-normal" style="margin-bottom: 120px;">
+        <div class="card-header" style="margin-bottom: 8px;">
+          <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f03e3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            치료 플랜
+          </div>
+        </div>
+        
+        <div class="task-item">
+          <div class="task-checkbox"></div>
+          <div class="task-content">
+            <div class="task-title">
+              물 주기 즉시 중단
+              <span class="task-time">지금 당장</span>
+            </div>
+            <div class="task-desc">화분의 겉흙과 속흙이 완전히 마를 때까지 최소 1주일간 물 주기를 멈춰주세요.</div>
+          </div>
+        </div>
+
+        <div class="task-item">
+          <div class="task-checkbox"></div>
+          <div class="task-content">
+            <div class="task-title">
+              통풍 환경 개선
+              <span class="task-time">오늘 내로</span>
+            </div>
+            <div class="task-desc">바람이 잘 통하는 창가나 서큘레이터 근처로 화분을 옮겨 흙의 수분을 날려주세요.</div>
+          </div>
+        </div>
+
       </div>
     </div>
+    
+    <!-- 4. 하단 고정 액션 버튼 -->
+    <div class="bottom-action">
+      <button class="btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+        AI 사장님에게 더 물어보기
+      </button>
+      <button class="btn-secondary" onclick="window.open('http://18005900.co.kr', '_blank')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+        맞춤형 분갈이 흙 보러가기
+      </button>
+    </div>
+
   </div>
+
+  <!-- 치료 플랜 클릭 액션 스크립트 -->
   <script>
-  // 치료 플랜 체크리스트 클릭 이벤트
-  document.addEventListener('DOMContentLoaded', () => {
-    const taskItems = document.querySelectorAll('.task-item');
-    
-    taskItems.forEach(item => {
-      item.addEventListener('click', () => {
-        // 클릭할 때마다 'checked' 상태를 넣었다 뺐다 하는 마법!
-        item.classList.toggle('checked');
+    document.addEventListener('DOMContentLoaded', () => {
+      const taskItems = document.querySelectorAll('.task-item');
+      taskItems.forEach(item => {
+        item.addEventListener('click', () => {
+          item.classList.toggle('checked');
+        });
       });
     });
-  });
-</script>
+  </script>
 </body>
 </html>
