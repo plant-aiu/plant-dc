@@ -59,6 +59,33 @@
     .center-cam-wrapper { position: relative; top: -25px; flex: 1; display: flex; justify-content: center; }
     .center-cam { background: #2b8a3e; width: 64px; height: 64px; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; box-shadow: 0 8px 24px rgba(43, 138, 62, 0.4); border: 4px solid #fff; cursor: pointer; }
     .center-cam svg { width: 28px; height: 28px; flex-shrink: 0; }
+
+    /* 🔥 치료 플랜 체크박스 클릭 애니메이션 효과 */
+.task-item { 
+  cursor: pointer; /* 마우스를 올리면 손가락 모양으로 변경 */
+  transition: all 0.2s ease; 
+}
+.task-item.checked .task-checkbox {
+  background-color: #2b8a3e; /* 초록색 배경으로 변경 */
+  border-color: #2b8a3e;
+}
+.task-item.checked .task-checkbox::after {
+  content: '✔'; /* 체크 모양 등장 */
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+}
+.task-item.checked .task-title {
+  text-decoration: line-through; /* 제목에 취소선 긋기 */
+  color: #adb5bd; /* 글자색을 옅은 회색으로 변경 */
+}
+.task-item.checked .task-time {
+  background: #f1f3f5;
+  color: #adb5bd;
+}
+.task-item.checked .task-desc {
+  color: #dee2e6; /* 설명글도 옅게 변경 */
+}
   </style>
 </head>
 <body>
@@ -149,5 +176,18 @@
       </div>
     </div>
   </div>
+  <script>
+  // 치료 플랜 체크리스트 클릭 이벤트
+  document.addEventListener('DOMContentLoaded', () => {
+    const taskItems = document.querySelectorAll('.task-item');
+    
+    taskItems.forEach(item => {
+      item.addEventListener('click', () => {
+        // 클릭할 때마다 'checked' 상태를 넣었다 뺐다 하는 마법!
+        item.classList.toggle('checked');
+      });
+    });
+  });
+</script>
 </body>
 </html>
